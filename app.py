@@ -36,10 +36,19 @@ def get_info():
         
         info = None
         last_exc = None
-        for browser in [None, 'safari', 'chrome']:
+        
+        is_instagram = "instagram.com" in url
+        browser_list = [None] if is_instagram else [None, 'safari', 'chrome']
+        
+        for browser in browser_list:
             ydl_opts = dict(base_opts)
-            if browser:
+            
+            # Prefer cookies.txt if it exists
+            if os.path.exists('cookies.txt'):
+                ydl_opts['cookiefile'] = 'cookies.txt'
+            elif browser:
                 ydl_opts['cookiesfrombrowser'] = (browser,)
+                
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=False)
@@ -48,6 +57,8 @@ def get_info():
                 last_exc = e
                 
         if not info:
+            if is_instagram and not os.path.exists('cookies.txt'):
+                raise Exception("Instagram requires authentication. Please export your Instagram cookies using a browser extension and save them as 'cookies.txt' in the application folder.")
             raise last_exc
             
         # Extract thumbnail
@@ -113,10 +124,18 @@ def download_video():
 
         success = False
         last_exc = None
-        for browser in [None, 'safari', 'chrome']:
+        
+        is_instagram = "instagram.com" in url
+        browser_list = [None] if is_instagram else [None, 'safari', 'chrome']
+        
+        for browser in browser_list:
             ydl_opts = dict(base_opts)
-            if browser:
+            
+            if os.path.exists('cookies.txt'):
+                ydl_opts['cookiefile'] = 'cookies.txt'
+            elif browser:
                 ydl_opts['cookiesfrombrowser'] = (browser,)
+                
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
@@ -126,6 +145,8 @@ def download_video():
                 last_exc = e
                 
         if not success:
+            if is_instagram and not os.path.exists('cookies.txt'):
+                raise Exception("Instagram requires authentication. Please export your Instagram cookies to 'cookies.txt'.")
             raise last_exc
 
 
