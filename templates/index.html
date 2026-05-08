@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonStream - Premium YouTube Downloader</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-play"></i>
+                <span>NeonStream</span>
+            </div>
+            <p class="subtitle">Download any YouTube video in stunning quality.</p>
+        </header>
+
+        <main class="glass-panel">
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <i class="fa-brands fa-youtube input-icon"></i>
+                    <input type="text" id="url-input" placeholder="Paste YouTube link here..." autocomplete="off">
+                </div>
+                <button id="fetch-btn" class="btn-primary">
+                    <i class="fa-solid fa-magnifying-glass"></i> Extract
+                </button>
+            </div>
+
+            <div id="loader" class="loader-container hidden">
+                <div class="spinner"></div>
+                <p>Analyzing video...</p>
+            </div>
+
+            <div id="error-message" class="error-message hidden">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="error-text">An error occurred. Please try again.</span>
+            </div>
+
+            <div id="result-section" class="result-section hidden">
+                <div class="video-info">
+                    <img id="video-thumbnail" src="" alt="Video Thumbnail">
+                    <h3 id="video-title">Video Title Goes Here</h3>
+                </div>
+
+                <div class="resolution-selector">
+                    <h4>Select Resolution</h4>
+                    <p class="res-note">Note: If 1080p/1440p lack separate streams, the highest available pre-merged quality will download.</p>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="480">
+                            <div class="card-content">
+                                <span class="res-title">480p</span>
+                                <span class="res-badge">SD</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="mp3">
+                            <div class="card-content">
+                                <span class="res-title">MP3</span>
+                                <span class="res-badge hd-badge" style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3);">Audio</span>
+                            </div>
+                        </label>
+                        
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="720" checked>
+                            <div class="card-content">
+                                <span class="res-title">720p</span>
+                                <span class="res-badge hd-badge">HD</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="1080">
+                            <div class="card-content">
+                                <span class="res-title">1080p</span>
+                                <span class="res-badge fhd-badge">FHD</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="1440">
+                            <div class="card-content">
+                                <span class="res-title">1440p</span>
+                                <span class="res-badge qhd-badge">2K</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="resolution" value="2160">
+                            <div class="card-content">
+                                <span class="res-title">2160p</span>
+                                <span class="res-badge uhd-badge">4K</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="time-selector" style="margin-bottom: 2rem; background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">Trim Timeline (Optional)</h4>
+                    <p class="res-note" style="margin-bottom: 1rem;">Drag the handles to select the segment you want to download.</p>
+                    
+                    <style>
+                        /* Dual Slider Styles */
+                        .slider-track {
+                            position: relative;
+                            width: 100%;
+                            height: 8px;
+                            background: rgba(255, 255, 255, 0.1);
+                            border-radius: 4px;
+                            margin: 20px 0 10px 0;
+                        }
+                        .slider-range-color {
+                            position: absolute;
+                            height: 100%;
+                            background: #d8b4fe;
+                            border-radius: 4px;
+                            left: 0%;
+                            right: 0%;
+                        }
+                        .dual-slider {
+                            position: absolute;
+                            width: 100%;
+                            height: 8px;
+                            top: 0;
+                            appearance: none;
+                            -webkit-appearance: none;
+                            background: transparent;
+                            pointer-events: none;
+                            outline: none;
+                            margin: 0;
+                        }
+                        .dual-slider::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            pointer-events: auto;
+                            width: 18px;
+                            height: 18px;
+                            border-radius: 50%;
+                            background: white;
+                            cursor: pointer;
+                            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+                            border: 2px solid #d8b4fe;
+                        }
+                        .dual-slider::-moz-range-thumb {
+                            pointer-events: auto;
+                            width: 18px;
+                            height: 18px;
+                            border-radius: 50%;
+                            background: white;
+                            cursor: pointer;
+                            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+                            border: 2px solid #d8b4fe;
+                        }
+                    </style>
+
+                    <div class="timeline-wrapper" style="opacity: 0.5; pointer-events: none;" id="timeline-wrapper">
+                        <div class="time-labels" style="display: flex; justify-content: space-between; font-family: monospace; color: #a8a29e; font-size: 0.9rem;">
+                            <span id="start-label">00:00</span>
+                            <span id="end-label">00:00</span>
+                        </div>
+                        <div class="slider-track">
+                            <div id="slider-range-color" class="slider-range-color"></div>
+                            <input type="range" id="start-slider" class="dual-slider" min="0" max="100" value="0">
+                            <input type="range" id="end-slider" class="dual-slider" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="download-btn" class="btn-large pulse">
+                    <i class="fa-solid fa-download"></i> Download Video
+                </button>
+                <div id="download-loader" class="download-loader hidden">
+                    <div class="download-spinner"></div>
+                    <span>Processing download, please wait...</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
