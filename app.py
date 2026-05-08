@@ -38,7 +38,8 @@ def get_info():
         last_exc = None
         
         is_instagram = "instagram.com" in url
-        browser_list = [None] if is_instagram else [None, 'safari', 'chrome']
+        browser_list = [None]
+
         
         for browser in browser_list:
             ydl_opts = dict(base_opts)
@@ -127,7 +128,8 @@ def download_video():
         last_exc = None
         
         is_instagram = "instagram.com" in url
-        browser_list = [None] if is_instagram else [None, 'safari', 'chrome']
+        browser_list = [None]
+
         
         for browser in browser_list:
             ydl_opts = dict(base_opts)
