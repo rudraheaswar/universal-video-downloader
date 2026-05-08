@@ -157,22 +157,44 @@ def download_video():
             return "Download failed", 500
         
         filename = files[0]
+        base, ext = os.path.splitext(filename)
 
-        # Trimming if requested
-        if start_time or end_time:
-            base, ext = os.path.splitext(filename)
-            out_file = f"{base}_trimmed{ext}"
+        # We will ALWAYS run an ffmpeg pass for QuickTime compatibility unless it's mp3
+        if resolution != "mp3":
+            out_file = f"{base}_qt.mp4"
             
             cmd = [ffmpeg_exe, "-y"]
             if start_time: cmd.extend(["-ss", start_time])
             if end_time: cmd.extend(["-to", end_time])
-            cmd.extend(["-i", filename, "-c", "copy", out_file])
+            
+            # Re-encode to libx264 with yuv420p pixel format to guarantee QuickTime compatibility!
+            cmd.extend([
+                "-i", filename, 
+                "-c:v", "libx264", 
+                "-preset", "fast", 
+                "-pix_fmt", "yuv420p", 
+                "-c:a", "aac", 
+                "-movflags", "+faststart", 
+                out_file
+            ])
             
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
             try: os.remove(filename)
             except: pass
             filename = out_file
+        else:
+            # For MP3, just handle trimming if needed
+            if start_time or end_time:
+                out_file = f"{base}_trimmed{ext}"
+                cmd = [ffmpeg_exe, "-y"]
+                if start_time: cmd.extend(["-ss", start_time])
+                if end_time: cmd.extend(["-to", end_time])
+                cmd.extend(["-i", filename, "-c", "copy", out_file])
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                try: os.remove(filename)
+                except: pass
+                filename = out_file
 
         download_name = os.path.basename(filename)
         
