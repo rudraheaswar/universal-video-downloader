@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    downloadBtn.addEventListener('click', () => {
+    downloadBtn.addEventListener('click', async () => {
         if (!currentVideoUrl) return;
 
         // Get selected resolution
@@ -141,28 +141,32 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadLoader.classList.remove('hidden');
 
         // Construct download URL
-        let downloadUrl = `/api/download?url=${encodeURIComponent(currentVideoUrl)}&res=${selectedRes}`;
+        let downloadUrl = `/api/download?url=${encodeURIComponent(currentVideoUrl)}&res=${selectedRes}&mode=desktop`;
         if (startTime) downloadUrl += `&start=${encodeURIComponent(startTime)}`;
         if (endTime) downloadUrl += `&end=${encodeURIComponent(endTime)}`;
 
-        // Create an invisible iframe or just set window.location
-        // Or simply create an anchor and click it to trigger file download
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        // The download attribute sometimes only works for same-origin, 
-        // since our API is same-origin, this works perfectly.
-        a.setAttribute('download', '');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Reset visual feedback after a short delay
-        // We can't know exactly when the browser starts the download as it's triggered via navigation,
-        // so we wait a few seconds before bringing the button back.
-        setTimeout(() => {
+        try {
+            const response = await fetch(downloadUrl);
+            if (response.headers.get('content-type')?.includes('application/json')) {
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Download failed");
+                alert(result.message);
+            } else {
+                // Fallback for web mode
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = ""; 
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (e) {
+            showError(e.message);
+        } finally {
             downloadBtn.classList.remove('hidden');
             downloadLoader.classList.add('hidden');
-        }, 5000);
+        }
     });
 
     function showError(msg) {

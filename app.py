@@ -11,7 +11,9 @@ import imageio_ffmpeg
 app = Flask(__name__)
 CORS(app)
 
-BASE_TEMP_DIR = os.path.join(os.path.dirname(os.path.abspath(__name__)), "temps")
+import tempfile
+
+BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), "NeonStreamTemps")
 os.makedirs(BASE_TEMP_DIR, exist_ok=True)
 
 @app.route("/")
@@ -152,8 +154,6 @@ def download_video():
 
         download_name = os.path.basename(filename)
         
-        # After send_file we ideally delete the folder, but send_file is async.
-        # We can clean up older folders occasionally.
         # Clean up older session directories (a simple cleanup routine)
         import time
         now = time.time()
@@ -163,6 +163,23 @@ def download_video():
                 # If older than 1 hour, remove
                 if os.stat(folder_path).st_mtime < now - 3600:
                     shutil.rmtree(folder_path, ignore_errors=True)
+
+        mode = request.args.get("mode")
+        if mode == "desktop":
+            downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
+            os.makedirs(downloads_dir, exist_ok=True)
+            
+            # Ensure unique filename if it already exists
+            final_path = os.path.join(downloads_dir, download_name)
+            counter = 1
+            base, ext = os.path.splitext(download_name)
+            while os.path.exists(final_path):
+                final_path = os.path.join(downloads_dir, f"{base}_{counter}{ext}")
+                counter += 1
+                
+            shutil.move(filename, final_path)
+            shutil.rmtree(session_dir, ignore_errors=True)
+            return jsonify({"success": True, "message": f"Saved to Downloads folder as {os.path.basename(final_path)}"})
 
         return send_file(filename, as_attachment=True, download_name=download_name)
     except Exception as e:
