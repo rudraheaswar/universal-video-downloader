@@ -26,13 +26,27 @@ def get_info():
         return jsonify({"error": "No URL provided"}), 400
 
     try:
-        ydl_opts = {
+        base_opts = {
             'quiet': True,
             'extract_flat': False,
             'nocheckcertificate': True,
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
+        
+        info = None
+        last_exc = None
+        for browser in [None, 'safari', 'chrome']:
+            ydl_opts = dict(base_opts)
+            if browser:
+                ydl_opts['cookiesfrombrowser'] = (browser,)
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    break
+            except Exception as e:
+                last_exc = e
+                
+        if not info:
+            raise last_exc
             
         # Extract thumbnail
         thumbnail = info.get('thumbnail')
@@ -74,7 +88,7 @@ def download_video():
     try:
         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         
-        ydl_opts = {
+        base_opts = {
             'outtmpl': os.path.join(session_dir, '%(title)s.%(ext)s'),
             'ffmpeg_location': ffmpeg_exe,
             'quiet': True,
@@ -84,19 +98,34 @@ def download_video():
         }
         
         if resolution == "mp3":
-            ydl_opts['format'] = 'bestaudio/best'
-            ydl_opts['postprocessors'] = [{
+            base_opts['format'] = 'bestaudio/best'
+            base_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
         else:
             # We request the best video up to the given resolution and best audio
-            ydl_opts['format'] = f'bestvideo[height<={res_int}]+bestaudio/best'
-            ydl_opts['merge_output_format'] = 'mp4'
+            base_opts['format'] = f'bestvideo[height<={res_int}]+bestaudio/best'
+            base_opts['merge_output_format'] = 'mp4'
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+        success = False
+        last_exc = None
+        for browser in [None, 'safari', 'chrome']:
+            ydl_opts = dict(base_opts)
+            if browser:
+                ydl_opts['cookiesfrombrowser'] = (browser,)
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+                    success = True
+                    break
+            except Exception as e:
+                last_exc = e
+                
+        if not success:
+            raise last_exc
+
 
         # Get the downloaded file
         files = glob.glob(os.path.join(session_dir, "*"))
