@@ -141,31 +141,42 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadLoader.classList.remove('hidden');
 
         // Construct download URL
-        let downloadUrl = `/api/download?url=${encodeURIComponent(currentVideoUrl)}&res=${selectedRes}&mode=desktop`;
+        let downloadUrl = `/api/download?url=${encodeURIComponent(currentVideoUrl)}&res=${selectedRes}`;
         if (startTime) downloadUrl += `&start=${encodeURIComponent(startTime)}`;
         if (endTime) downloadUrl += `&end=${encodeURIComponent(endTime)}`;
 
-        try {
-            const response = await fetch(downloadUrl);
-            if (response.headers.get('content-type')?.includes('application/json')) {
+        // Check if we are running inside the native Desktop wrapper (pywebview)
+        // pywebview injects a global window.pywebview object
+        const isDesktop = typeof window.pywebview !== 'undefined';
+
+        if (isDesktop) {
+            downloadUrl += "&mode=desktop";
+            try {
+                const response = await fetch(downloadUrl);
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || "Download failed");
                 alert(result.message);
-            } else {
-                // Fallback for web mode
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = ""; 
-                a.click();
-                window.URL.revokeObjectURL(url);
+            } catch (e) {
+                showError(e.message);
+            } finally {
+                downloadBtn.classList.remove('hidden');
+                downloadLoader.classList.add('hidden');
             }
-        } catch (e) {
-            showError(e.message);
-        } finally {
-            downloadBtn.classList.remove('hidden');
-            downloadLoader.classList.add('hidden');
+        } else {
+            // Standard Web / PWA Mode
+            // Let the browser's native download manager handle the file stream.
+            // Fetching a large video into a Blob will crash mobile browsers.
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = downloadUrl;
+            document.body.appendChild(iframe);
+            
+            // Remove iframe and reset UI after a reasonable delay
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                downloadBtn.classList.remove('hidden');
+                downloadLoader.classList.add('hidden');
+            }, 5000);
         }
     });
 

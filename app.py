@@ -229,9 +229,15 @@ def download_video():
 
         return send_file(filename, as_attachment=True, download_name=download_name)
     except Exception as e:
-        # On error, clean up session dir immediately
-        shutil.rmtree(session_dir, ignore_errors=True)
-        return str(e), 500
+         if os.path.isdir(session_dir):
+            shutil.rmtree(session_dir, ignore_errors=True)
+         return jsonify({"error": str(e)}), 500
+
+@app.route('/sw.js')
+def sw():
+    response = app.send_static_file('sw.js')
+    response.headers['Content-Type'] = 'application/javascript'
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
