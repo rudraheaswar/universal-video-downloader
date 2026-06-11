@@ -6,3 +6,10 @@ __pycache__/
 .DS_Store
 *.mp4
 *.mp3
+
+# PyInstaller
+build/
+dist/
+*.spec
+patch_app.py
+
