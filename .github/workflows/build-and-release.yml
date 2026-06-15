@@ -2,8 +2,8 @@ name: Build and Release Desktop Apps
 
 on:
   push:
-    tags:
-      - 'v*' # Trigger on tags like v1.0, v1.0.1, etc.
+    branches:
+      - main
 
 jobs:
   build:
@@ -51,6 +51,8 @@ jobs:
     - name: Upload Artifacts to Release
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: "v1.0.${{ github.run_number }}"
+        name: "NeonStream Release v1.0.${{ github.run_number }}"
         files: |
           dist/NeonStream-macOS.zip
           dist/NeonStream-Windows.exe
