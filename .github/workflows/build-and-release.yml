@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -28,23 +31,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Build Executable with PyInstaller
-      run: |
-        pyinstaller --name "NeonStream" --windowed --add-data "templates:templates" --add-data "static:static" --hidden-import yt_dlp --hidden-import imageio_ffmpeg main.py
-      # Note: On Windows, use a semicolon `;` for add-data, on Mac use a colon `:`. PyInstaller now handles either smoothly in modern versions or we can use the spec file. We will use the spec file instead since it's already generated and cross-platform compatible.
-      
-    - name: Use Spec File for Build
-      run: pyinstaller NeonStream.spec --clean
-
-    - name: Zip Mac Application
+    - name: Build Mac Executable
       if: matrix.os == 'macos-latest'
       run: |
+        pyinstaller --name "NeonStream" --windowed --add-data "templates:templates" --add-data "static:static" --hidden-import yt_dlp --hidden-import imageio_ffmpeg main.py
         cd dist
         zip -r NeonStream-macOS.zip NeonStream.app
         
-    - name: Rename Windows Executable
+    - name: Build Windows Executable
       if: matrix.os == 'windows-latest'
       run: |
+        pyinstaller --name "NeonStream" --windowed --onefile --add-data "templates;templates" --add-data "static;static" --hidden-import yt_dlp --hidden-import imageio_ffmpeg main.py
         cd dist
         Rename-Item -Path NeonStream.exe -NewName NeonStream-Windows.exe
         
