@@ -8,3 +8,6 @@ Jinja2==3.1.6
 MarkupSafe==3.0.3
 Werkzeug==3.1.8
 yt-dlp==2026.3.17
+
+pywebview==5.0.5
+pyinstaller==6.20.0
