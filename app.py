@@ -161,42 +161,36 @@ def download_video():
         filename = files[0]
         base, ext = os.path.splitext(filename)
 
-        # We will ALWAYS run an ffmpeg pass for QuickTime compatibility unless it's mp3
-        if resolution != "mp3":
-            out_file = f"{base}_qt.mp4"
-            
+        # Only run ffmpeg if trimming is requested
+        if start_time or end_time:
+            out_file = f"{base}_processed{ext}"
             cmd = [ffmpeg_exe, "-y"]
             if start_time: cmd.extend(["-ss", start_time])
             if end_time: cmd.extend(["-to", end_time])
             
-            # Re-encode to libx264 with yuv420p pixel format to guarantee QuickTime compatibility!
-            cmd.extend([
-                "-i", filename, 
-                "-c:v", "libx264", 
-                "-preset", "fast", 
-                "-pix_fmt", "yuv420p", 
-                "-c:a", "aac", 
-                "-movflags", "+faststart", 
-                out_file
-            ])
+            # Try fast stream copying first (takes less than a second, avoids timeouts)
+            cmd.extend(["-i", filename, "-c", "copy", "-movflags", "+faststart", out_file])
+            res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
+            # If stream copy fails and it is a video, fallback to re-encoding
+            if res.returncode != 0 and resolution != "mp3":
+                cmd_reencode = [ffmpeg_exe, "-y"]
+                if start_time: cmd_reencode.extend(["-ss", start_time])
+                if end_time: cmd_reencode.extend(["-to", end_time])
+                cmd_reencode.extend([
+                    "-i", filename, 
+                    "-c:v", "libx264", 
+                    "-preset", "veryfast", 
+                    "-pix_fmt", "yuv420p", 
+                    "-c:a", "aac", 
+                    "-movflags", "+faststart", 
+                    out_file
+                ])
+                subprocess.run(cmd_reencode, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
             try: os.remove(filename)
             except: pass
             filename = out_file
-        else:
-            # For MP3, just handle trimming if needed
-            if start_time or end_time:
-                out_file = f"{base}_trimmed{ext}"
-                cmd = [ffmpeg_exe, "-y"]
-                if start_time: cmd.extend(["-ss", start_time])
-                if end_time: cmd.extend(["-to", end_time])
-                cmd.extend(["-i", filename, "-c", "copy", out_file])
-                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                try: os.remove(filename)
-                except: pass
-                filename = out_file
 
         download_name = os.path.basename(filename)
         

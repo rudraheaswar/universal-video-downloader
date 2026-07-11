@@ -166,17 +166,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Standard Web / PWA Mode
             // Let the browser's native download manager handle the file stream.
             // Fetching a large video into a Blob will crash mobile browsers.
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = downloadUrl;
-            document.body.appendChild(iframe);
+            // Standard Web / PWA Mode
+            // Using a temporary <a> tag with target="_blank" is the most compatible way to trigger 
+            // a native file download on iOS (Safari) and Android (Chrome) without crashing the browser.
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.target = '_blank';
+            link.setAttribute('download', '');
+            document.body.appendChild(link);
+            link.click();
             
-            // Remove iframe and reset UI after a reasonable delay
             setTimeout(() => {
-                document.body.removeChild(iframe);
+                document.body.removeChild(link);
                 downloadBtn.classList.remove('hidden');
                 downloadLoader.classList.add('hidden');
-            }, 5000);
+            }, 3000);
         }
     });
 
