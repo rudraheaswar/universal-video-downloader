@@ -161,19 +161,27 @@ def download_video():
         filename = files[0]
         base, ext = os.path.splitext(filename)
 
-        # Only run ffmpeg if trimming is requested
-        if start_time or end_time:
-            out_file = f"{base}_processed{ext}"
+        if resolution != "mp3":
+            # Always run a fast compatibility pass to ensure AAC audio and H.264 video.
+            # Video stream is copied directly (-c:v copy) to prevent CPU usage/timeouts,
+            # and audio stream is re-encoded to AAC (-c:a aac) to guarantee playback on all iOS and Android devices.
+            out_file = f"{base}_compat.mp4"
             cmd = [ffmpeg_exe, "-y"]
             if start_time: cmd.extend(["-ss", start_time])
             if end_time: cmd.extend(["-to", end_time])
             
-            # Try fast stream copying first (takes less than a second, avoids timeouts)
-            cmd.extend(["-i", filename, "-c", "copy", "-movflags", "+faststart", out_file])
+            cmd.extend([
+                "-i", filename, 
+                "-c:v", "copy", 
+                "-c:a", "aac", 
+                "-movflags", "+faststart", 
+                out_file
+            ])
             res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            # If stream copy fails and it is a video, fallback to re-encoding
-            if res.returncode != 0 and resolution != "mp3":
+            # If the fast copy/encode fails (e.g. video codec is not H.264 and copy fails),
+            # fallback to full re-encoding
+            if res.returncode != 0:
                 cmd_reencode = [ffmpeg_exe, "-y"]
                 if start_time: cmd_reencode.extend(["-ss", start_time])
                 if end_time: cmd_reencode.extend(["-to", end_time])
@@ -191,6 +199,18 @@ def download_video():
             try: os.remove(filename)
             except: pass
             filename = out_file
+        else:
+            # For MP3, just handle trimming if needed
+            if start_time or end_time:
+                out_file = f"{base}_trimmed{ext}"
+                cmd = [ffmpeg_exe, "-y"]
+                if start_time: cmd.extend(["-ss", start_time])
+                if end_time: cmd.extend(["-to", end_time])
+                cmd.extend(["-i", filename, "-c", "copy", out_file])
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                try: os.remove(filename)
+                except: pass
+                filename = out_file
 
         download_name = os.path.basename(filename)
         
