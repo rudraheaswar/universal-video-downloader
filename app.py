@@ -20,6 +20,23 @@ os.makedirs(BASE_TEMP_DIR, exist_ok=True)
 def index():
     return render_template("index.html")
 
+@app.route("/api/test-ffmpeg")
+def test_ffmpeg():
+    import subprocess
+    import imageio_ffmpeg
+    try:
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+        res = subprocess.run([exe, "-version"], capture_output=True, text=True)
+        return jsonify({
+            "exe": exe,
+            "exists": os.path.exists(exe),
+            "returncode": res.returncode,
+            "stdout": res.stdout[:500],
+            "stderr": res.stderr[:500]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 @app.route("/api/info", methods=["POST"])
 def get_info():
     data = request.json
@@ -178,6 +195,8 @@ def download_video():
             
             cmd.extend([
                 "-i", filename, 
+                "-map", "0:v",
+                "-map", "0:a?",
                 "-c:v", "copy", 
                 "-c:a", "aac", 
                 "-movflags", "+faststart", 
@@ -193,6 +212,8 @@ def download_video():
                 if end_time: cmd_reencode.extend(["-to", end_time])
                 cmd_reencode.extend([
                     "-i", filename, 
+                    "-map", "0:v",
+                    "-map", "0:a?",
                     "-c:v", "libx264", 
                     "-preset", "veryfast", 
                     "-pix_fmt", "yuv420p", 
