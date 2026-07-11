@@ -120,8 +120,8 @@ def download_video():
                 'preferredquality': '192',
             }]
         else:
-            # We request the best video up to the given resolution and best audio
-            base_opts['format'] = f'bestvideo[height<={res_int}]+bestaudio/best'
+            # Request strictly H.264 (avc1) video and AAC (mp4a) audio for native iOS/QuickTime compatibility
+            base_opts['format'] = f'bestvideo[height<={res_int}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<={res_int}][vcodec^=avc1]/best[height<={res_int}]+bestaudio/best'
             base_opts['merge_output_format'] = 'mp4'
 
         success = False
