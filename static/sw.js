@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neonstream-v1';
+const CACHE_NAME = 'neonstream-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/static/style.css',

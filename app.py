@@ -67,11 +67,17 @@ def get_info():
         if not thumbnail and 'thumbnails' in info and info['thumbnails']:
             thumbnail = info['thumbnails'][-1].get('url', '')
             
+        duration = info.get('duration', 0)
+        # Instagram often returns a default placeholder duration of 90 seconds for reels.
+        # If it is exactly 90, we set it to 0 to disable the trimmer timeline since it is inaccurate.
+        if is_instagram and duration == 90:
+            duration = 0
+            
         return jsonify({
             "title": info.get('title', 'Unknown Title'),
             "thumbnail": thumbnail,
             "url": url,
-            "length": info.get('duration', 0)
+            "length": duration
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -120,8 +126,8 @@ def download_video():
                 'preferredquality': '192',
             }]
         else:
-            # Request strictly H.264 (avc1) video and AAC (mp4a) audio for native iOS/QuickTime compatibility
-            base_opts['format'] = f'bestvideo[height<={res_int}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<={res_int}][vcodec^=avc1]/best[height<={res_int}]+bestaudio/best'
+            # Request H.264 video and the best available audio (ffmpeg will normalize the audio to AAC during copy)
+            base_opts['format'] = f'bestvideo[height<={res_int}][vcodec^=avc1]+bestaudio/best[height<={res_int}][vcodec^=avc1]/best'
             base_opts['merge_output_format'] = 'mp4'
 
         success = False
