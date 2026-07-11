@@ -196,6 +196,28 @@
         </main>
     </div>
 
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal hidden">
+        <div class="modal-content">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h3>Download Started!</h3>
+            <p>Your video is downloading directly to your device's <strong>Downloads</strong> folder (Files app).</p>
+            
+            <div class="instructions">
+                <h4>To save this video to your Photos/Gallery:</h4>
+                <ol>
+                    <li>Open the <strong>Files</strong> app on your iPhone.</li>
+                    <li>Tap on the downloaded video to open it.</li>
+                    <li>Tap the <strong>Share</strong> icon (bottom-left) and select <strong>Save Video</strong>.</li>
+                </ol>
+            </div>
+            
+            <button id="close-modal-btn" class="btn-primary" style="width: 100%; padding: 1rem; border-radius: 12px; font-weight: 600;">
+                Back to Downloader
+            </button>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
         // Register Service Worker for PWA

@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoTitle = document.getElementById('video-title');
     const downloadBtn = document.getElementById('download-btn');
     const downloadLoader = document.getElementById('download-loader');
+    
+    // Success Modal elements
+    const successModal = document.getElementById('success-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
 
     // Timeline elements
     const timelineWrapper = document.getElementById('timeline-wrapper');
@@ -164,14 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             // Standard Web / PWA Mode
-            // Let the browser's native download manager handle the file stream.
-            // Fetching a large video into a Blob will crash mobile browsers.
-            // Standard Web / PWA Mode
-            // Using a temporary <a> tag with target="_blank" is the most compatible way to trigger 
-            // a native file download on iOS (Safari) and Android (Chrome) without crashing the browser.
+            // Trigger native download in-place without navigating away or opening new tabs.
+            // The server's attachment header forces the browser to open a download prompt.
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.target = '_blank';
             link.setAttribute('download', '');
             document.body.appendChild(link);
             link.click();
@@ -180,8 +180,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.removeChild(link);
                 downloadBtn.classList.remove('hidden');
                 downloadLoader.classList.add('hidden');
-            }, 3000);
+                
+                // Show the success modal with instructions
+                successModal.classList.remove('hidden');
+            }, 1500);
         }
+        
+        // Modal close event listener
+        closeModalBtn.addEventListener('click', () => {
+            successModal.classList.add('hidden');
+        });
     });
 
     function showError(msg) {
