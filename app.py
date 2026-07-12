@@ -54,6 +54,43 @@ def test_ffmpeg():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+@app.route("/api/test-cookies")
+def test_cookies():
+    env_cookies = os.getenv("YT_COOKIES")
+    cookie_file = get_cookie_file()
+    exists = os.path.exists(cookie_file) if cookie_file else False
+    
+    file_lines = []
+    if exists:
+        try:
+            with open(cookie_file, "r") as f:
+                for line in f:
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    if stripped.startswith("#"):
+                        file_lines.append(stripped)
+                        continue
+                    # Hide sensitive cookie values for security
+                    parts = stripped.split("\t")
+                    if len(parts) >= 7:
+                        # Redact the actual cookie value (index 6)
+                        parts[6] = "[REDACTED]"
+                        file_lines.append("\t".join(parts))
+                    else:
+                        file_lines.append(stripped)
+        except Exception as e:
+            file_lines.append(f"Error reading file: {e}")
+            
+    return jsonify({
+        "env_var_set": env_cookies is not None,
+        "env_var_len": len(env_cookies) if env_cookies else 0,
+        "cookie_file_path": cookie_file,
+        "cookie_file_exists": exists,
+        "cookie_lines_count": len(file_lines),
+        "cookie_preview": file_lines[:15]  # Safe preview with redacted values
+    })
+
 @app.route("/api/info", methods=["POST"])
 def get_info():
     data = request.json
