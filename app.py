@@ -16,6 +16,23 @@ import tempfile
 BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), "NeonStreamTemps")
 os.makedirs(BASE_TEMP_DIR, exist_ok=True)
 
+def get_cookie_file():
+    # If a cookies.txt file already exists locally, use it
+    if os.path.exists('cookies.txt'):
+        return 'cookies.txt'
+    
+    # Otherwise, check if cookies are supplied in the YT_COOKIES environment variable (for Render/cloud deployments)
+    env_cookies = os.getenv("YT_COOKIES")
+    if env_cookies:
+        temp_cookie_path = os.path.join(tempfile.gettempdir(), "neonstream_cookies.txt")
+        try:
+            with open(temp_cookie_path, "w") as f:
+                f.write(env_cookies.strip())
+            return temp_cookie_path
+        except Exception as e:
+            print(f"Failed to write temporary cookie file: {e}")
+    return None
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -61,9 +78,10 @@ def get_info():
         for browser in browser_list:
             ydl_opts = dict(base_opts)
             
-            # Prefer cookies.txt if it exists
-            if os.path.exists('cookies.txt'):
-                ydl_opts['cookiefile'] = 'cookies.txt'
+            # Load cookies from file or env variable
+            cookie_path = get_cookie_file()
+            if cookie_path:
+                ydl_opts['cookiefile'] = cookie_path
             elif browser:
                 ydl_opts['cookiesfrombrowser'] = (browser,)
                 
@@ -75,8 +93,8 @@ def get_info():
                 last_exc = e
                 
         if not info:
-            if is_instagram and not os.path.exists('cookies.txt'):
-                raise Exception("Instagram requires authentication. Please export your Instagram cookies using a browser extension and save them as 'cookies.txt' in the application folder.")
+            if is_instagram and not get_cookie_file():
+                raise Exception("Instagram requires authentication. Please export your Instagram cookies using a browser extension and set the YT_COOKIES environment variable in Render.")
             raise last_exc
             
         # Extract thumbnail
@@ -157,8 +175,9 @@ def download_video():
         for browser in browser_list:
             ydl_opts = dict(base_opts)
             
-            if os.path.exists('cookies.txt'):
-                ydl_opts['cookiefile'] = 'cookies.txt'
+            cookie_path = get_cookie_file()
+            if cookie_path:
+                ydl_opts['cookiefile'] = cookie_path
             elif browser:
                 ydl_opts['cookiesfrombrowser'] = (browser,)
                 
@@ -171,7 +190,7 @@ def download_video():
                 last_exc = e
                 
         if not success:
-            if is_instagram and not os.path.exists('cookies.txt'):
+            if is_instagram and not get_cookie_file():
                 raise Exception("Instagram requires authentication. Please export your Instagram cookies to 'cookies.txt'.")
             raise last_exc
 
