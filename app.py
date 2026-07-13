@@ -103,6 +103,11 @@ def get_info():
             'quiet': True,
             'extract_flat': False,
             'nocheckcertificate': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android'],
+                }
+            }
         }
         
         info = None
@@ -187,7 +192,12 @@ def download_video():
             'no_warnings': True,
             'restrictfilenames': True, # Ensures file is safe on all OS
             'nocheckcertificate': True,
-            'format_sort': ['res', 'vcodec:h264', 'acodec:m4a']
+            'format_sort': ['res', 'vcodec:h264', 'acodec:m4a'],
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android'],
+                }
+            }
         }
         
         if resolution == "mp3":
