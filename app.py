@@ -105,7 +105,7 @@ def get_info():
             'nocheckcertificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android'],
+                    'player_client': ['mweb', 'default', '-web'],
                 }
             }
         }
@@ -195,7 +195,7 @@ def download_video():
             'format_sort': ['res', 'vcodec:h264', 'acodec:m4a'],
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android'],
+                    'player_client': ['mweb', 'default', '-web'],
                 }
             }
         }
